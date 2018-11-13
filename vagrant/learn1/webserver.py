@@ -1,9 +1,45 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import cgi
 
+import os
+import sys
+
+from sqlalchemy import Column, ForeignKey, Integer, String
+
+from sqlalchemy.ext.declarative import declarative_base
+
+from sqlalchemy.orm import relationship
+
+from sqlalchemy import create_engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Restaurant, MenuItem
+
+
+engine = create_engine('sqlite:///restaurantmenu.db')
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind = engine)
+session = DBSession()
+
+
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
+            if self.path.endswith("/restaurants"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                listRestaurants = session.query(Restaurant).all()
+
+                for restaurant in listRestaurants:
+                    output = ""
+                    output +="<html><body>"
+                    output +="<h2> %s </h2>" % restaurant.name
+                    output += "</body></html>"
+                    self.wfile.write(output)
+                    print output
+                return
+
             if self.path.endswith("/hello"):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
@@ -65,6 +101,28 @@ def main():
     except KeyboardInterrupt:
         print "^C entered, stopping web server..."
         server.socket.close()
+
+Base = declarative_base()
+
+class Restaurant(Base):
+    __tablename__ = 'restaurant'
+    #mapper
+    name = Column(String(80), nullable = False)
+    id = Column(Integer, primary_key = True)
+class MenuItem(Base):
+    __tablename__ = 'menu_item'
+    #mapper
+    name = Column(String(80), nullable = False)
+    id = Column(Integer, primary_key = True)
+    course = Column(String(250))
+    description = Column(String(250))
+    price = Column(String(8))
+    restaurant_id = Column(Integer, ForeignKey('restaurant.id'))
+
+    restaurant = relationship(Restaurant)
+
+engine = create_engine('sqlite:///restaurantmenu.db')
+Base.metadata.create_all(engine)
 
 if __name__ == '__main__':
     main()
