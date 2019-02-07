@@ -20,14 +20,15 @@ def restaurantMenu(restaurant_id):
 
 @app.route('/')
 def restaurant():
-    restaurant=session.query(Restaurant).all()
+    restaurant = session.query(Restaurant).all()
     return render_template('restaurant.html', restaurant=restaurant)
 
 
 @app.route('/restaurants/<int:restaurant_id>/new/', methods=['GET', 'POST'])
 def newMenuItem(restaurant_id):
     if request.method == 'POST':
-        newItem = MenuItem(name=request.form['name'], restaurant_id=restaurant_id)
+        newItem = MenuItem(name=request.form['name'], price=request.form['price'],
+                           description=request.form['description'], restaurant_id=restaurant_id)
         session.add(newItem)
         session.commit()
         return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
